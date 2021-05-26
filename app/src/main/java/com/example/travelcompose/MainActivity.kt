@@ -3,7 +3,9 @@ package com.example.travelcompose
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -47,7 +49,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.res.painterResource
@@ -57,6 +63,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.travelcompose.ui.theme.PrimaryColor
 import com.example.travelcompose.ui.theme.TravelComposeTheme
 
 class MainActivity : ComponentActivity() {
@@ -94,22 +101,66 @@ fun TravelCompose() {
 @Composable
 fun TravelBottomNavigation() {
     val dummyListIcon = listOf(
-        "Home" to Icons.Outlined.Home,
-        "Search" to Icons.Outlined.Search,
-        "Book" to Icons.Outlined.FavoriteBorder,
-        "Personal" to Icons.Outlined.Person
+        NavItem("Home", Icons.Outlined.Home),
+        NavItem("Search", Icons.Outlined.Search),
+        NavItem("Book", Icons.Outlined.FavoriteBorder),
+        NavItem("Personal", Icons.Outlined.Person),
     )
+    val (item, onItemSelected) = remember {
+        mutableStateOf(dummyListIcon[0])
+    }
     Row(modifier = Modifier.padding(24.dp)) {
         dummyListIcon.forEach {
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = it.second,
-                    contentDescription = null,
-                    modifier = Modifier.size(28.dp)
+                TravelIconBottomNav(
+                    item = it,
+                    isSelected = it == item,
+                    onItemSelected = { onItemSelected(it) },
                 )
             }
         }
     }
+}
+
+@Composable
+fun TravelIconBottomNav(
+    item: NavItem,
+    isSelected: Boolean,
+    onItemSelected: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Crossfade(
+        targetState = isSelected,
+        animationSpec = tween(5, easing = LinearEasing)
+    ) {
+        if (it) {
+            Text(
+                text = item.title,
+                color = MaterialTheme.colors.primary,
+                modifier = modifier.withSelection()
+            )
+        } else {
+            Icon(
+                imageVector = item.icon,
+                contentDescription = null,
+                modifier = modifier
+                    .clickable {
+                        onItemSelected()
+                    }
+                    .size(28.dp)
+            )
+        }
+    }
+
+}
+
+private fun Modifier.withSelection() = drawWithContent {
+    drawContent()
+
+    val radius = 4.dp.value * density
+    val dotCenter = Offset(x = size.center.x, y = size.height * 1.2f)
+
+    drawCircle(color = PrimaryColor, radius, dotCenter)
 }
 
 @Composable
@@ -291,7 +342,6 @@ fun ItemPlace(
         )
         ItemDescription(place = place, modifier = Modifier.align(Alignment.BottomCenter))
     }
-
 }
 
 @Composable
@@ -327,6 +377,11 @@ data class Place(
     val name: String,
     val country: String,
     val image: Int,
+)
+
+data class NavItem(
+    val title: String,
+    val icon: ImageVector,
 )
 
 
