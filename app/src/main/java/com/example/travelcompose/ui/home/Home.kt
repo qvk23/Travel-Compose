@@ -51,14 +51,16 @@ import com.example.travelcompose.model.Place
 import com.example.travelcompose.model.dummyPlaces
 
 @Composable
-fun TravelHomeCompose() {
+fun TravelHomeCompose(
+    onPlaceClick: (Int) -> Unit
+) {
     Column(modifier = Modifier.padding(24.dp)) {
         Spacer(modifier = Modifier.height(16.dp))
         TravelCaption()
         Spacer(modifier = Modifier.height(20.dp))
         TravelChips()
         Spacer(modifier = Modifier.height(20.dp))
-        TravelPlaces()
+        TravelPlaces(onPlaceClick)
     }
 }
 
@@ -179,7 +181,9 @@ fun TravelChipItem(
 }
 
 @Composable
-fun TravelPlaces() {
+fun TravelPlaces(
+    onPlaceClick: (Int) -> Unit
+) {
     LazyRow {
         items(dummyPlaces) { place ->
             ItemPlace(
@@ -187,7 +191,8 @@ fun TravelPlaces() {
                 modifier = Modifier
                     .fillParentMaxWidth(0.8f)
                     .fillParentMaxHeight(0.9f)
-                    .padding(10.dp)
+                    .padding(10.dp),
+                onPlaceClick = onPlaceClick
             )
         }
     }
@@ -196,10 +201,15 @@ fun TravelPlaces() {
 @Composable
 fun ItemPlace(
     place: Place,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onPlaceClick: (Int) -> Unit
 ) {
     Box(
-        modifier = modifier.clip(RoundedCornerShape(16.dp))
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .clickable {
+                onPlaceClick(place.id)
+            }
     ) {
         Image(
             painter = painterResource(id = place.image),

@@ -16,12 +16,8 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -29,10 +25,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.center
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.TravelComposeNavGraph
+import com.example.travelcompose.model.Destination
 import com.example.travelcompose.ui.theme.PrimaryColor
 import com.example.travelcompose.ui.theme.TravelComposeTheme
 
@@ -46,7 +44,7 @@ class MainActivity : ComponentActivity() {
                 Surface(color = MaterialTheme.colors.background) {
                     Scaffold(
                         bottomBar = {
-                            TravelBottomNavigation()
+                            TravelBottomNavigation(navController)
                         },
                     ) {
                         TravelComposeNavGraph(navController)
@@ -58,24 +56,38 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun TravelBottomNavigation() {
-    val dummyListIcon = listOf(
-        NavItem("Home", Icons.Outlined.Home),
-        NavItem("Search", Icons.Outlined.Search),
-        NavItem("Book", Icons.Outlined.FavoriteBorder),
-        NavItem("Personal", Icons.Outlined.Person),
-    )
-    val (item, onItemSelected) = remember {
-        mutableStateOf(dummyListIcon[0])
+fun TravelBottomNavigation(
+    navController: NavController
+) {
+    val section = remember { Destination.values() }
+    val routes = remember {
+        section.map { it.route }
     }
-    Row(modifier = Modifier.padding(24.dp)) {
-        dummyListIcon.forEach {
-            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                TravelIconBottomNav(
-                    item = it,
-                    isSelected = it == item,
-                    onItemSelected = { onItemSelected(it) },
-                )
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    if (currentRoute in routes) {
+        val dummyListIcon = listOf(
+            Destination.Feed,
+            Destination.Search,
+            Destination.Book,
+            Destination.Person,
+        )
+        val (currentSection, onItemSelected) = remember {
+            mutableStateOf(section.first { it.route == currentRoute })
+        }
+        Row(modifier = Modifier.padding(24.dp)) {
+            dummyListIcon.forEach { section ->
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    TravelIconBottomNav(
+                        item = section,
+                        isSelected = section == currentSection,
+                        onItemSelected = {
+                            navController.navigate(section.route)
+                            onItemSelected(section)
+                        },
+                    )
+                }
             }
         }
     }
@@ -83,7 +95,7 @@ fun TravelBottomNavigation() {
 
 @Composable
 fun TravelIconBottomNav(
-    item: NavItem,
+    item: Destination,
     isSelected: Boolean,
     onItemSelected: () -> Unit,
     modifier: Modifier = Modifier
@@ -94,7 +106,7 @@ fun TravelIconBottomNav(
     ) {
         if (it) {
             Text(
-                text = item.title,
+                text = item.route,
                 color = MaterialTheme.colors.primary,
                 modifier = modifier.withSelection()
             )
@@ -120,8 +132,3 @@ private fun Modifier.withSelection() = drawWithContent {
 
     drawCircle(color = PrimaryColor, radius, dotCenter)
 }
-
-data class NavItem(
-    val title: String,
-    val icon: ImageVector,
-)
